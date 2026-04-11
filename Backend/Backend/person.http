@@ -1,28 +1,37 @@
 @base_addess = http://localhost:3000/api/people
 
+### 1. Create a new person
 POST {{base_addess}}
 Content-Type: application/json
 
-# {
-#     "firstName":"J",
-#     "lastName":"D"
-# }
+{
+    "firstName": "John",
+    "lastName": "Smith",
+    "emailAddress": "john.smith@example.com",
+    "dateOfBirth": "1990-05-15",
+    "salary": 75000,
+    "department": "IT"
+}
 
-###
-GET  {{base_addess}}
+### 2. Get all people
+GET {{base_addess}}
 
-###
-GET  {{base_addess}}/1
+### 3. Get specific person (replace 1 with actual id from create response)
+GET {{base_addess}}/1
 
-###
-PUT  {{base_addess}}/3
+### 4. Update a person
+PUT {{base_addess}}/1
 Content-Type: application/json
 
-# {
-#     "id":3,
-#     "firstName":"Jaaa",
-#     "lastName":"Daaa"
-# }
+{
+    "id": 1,
+    "firstName": "John",
+    "lastName": "Smith",
+    "emailAddress": "john.smith@company.com",
+    "dateOfBirth": "1990-05-15",
+    "salary": 85000,
+    "department": "Engineering"
+}
 
-###
-DELETE {{base_addess}}/4
+### 5. Delete a person
+DELETE {{base_addess}}/1

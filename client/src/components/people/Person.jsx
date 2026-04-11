@@ -13,67 +13,116 @@ function Person() {
     const [editData, setEditData] = useState(null);
 
     useEffect(() => {
-        try {
-            const loadPeople = async () => {
+        const loadPeople = async () => {
+            try {
                 var peopleData = (await axios.get(BASE_URL)).data;
                 setPeople(peopleData);
+            } catch (error) {
+                console.log(error);
+                toast.error("Error has occured!");
+            } finally {
+                setLoading(false);
             }
-            loadPeople();
-        } catch (error) {
-            console.log(error);
-            toast.error("Error has occured!");
         }
-        finally {
-            setLoading(false);
-        }
-
+        loadPeople();
     }, []);
 
     useEffect(() => {
-        methods.reset(editData);
+        if (editData) {
+            methods.reset(editData);
+        }
     }, [editData])
 
     const defaultFormValues = {
         id: 0,
         firstName: '',
-        lastName: ''
+        lastName: '',
+        emailAddress: '',
+        dateOfBirth: '',
+        salary: '',
+        department: ''
     }
 
     const methods = useForm({
         defaultValues: defaultFormValues
     });
 
+    // Watch dateOfBirth to auto-calculate age
+    const dateOfBirth = methods.watch('dateOfBirth');
 
+    // Calculate age based on date of birth
+    const calculateAge = (dob) => {
+        if (!dob) return '';
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    };
 
     const handleFormReset = () => {
         methods.reset(defaultFormValues);
+        setEditData(null);
     }
-
 
     const handleFormSubmit = async (person) => {
         setLoading(true);
         try {
+            const personData = {
+                firstName: person.firstName,
+                lastName: person.lastName,
+                emailAddress: person.emailAddress,
+                dateOfBirth: person.dateOfBirth ? new Date(person.dateOfBirth).toISOString() : null,
+                salary: parseFloat(person.salary) || 0,
+                department: person.department
+            };
+
             if (person.id <= 0) {
-                const createdPerson = (await axios.post(BASE_URL, person)).data;
-                setPeople((previousPerson) => [...previousPerson, createdPerson]);
-            }
-            else {
-                await axios.put(`${BASE_URL}/${person.id}`, person);
-                setPeople((previousPeople) => previousPeople.map(p => p.id === person.id ? person : p));
+                // Create new person
+                const response = await axios.post(BASE_URL, personData);
+                // Fetch complete person data including age
+                const completePerson = (await axios.get(`${BASE_URL}/${response.data.id}`)).data;
+                setPeople((previousPerson) => [...previousPerson, completePerson]);
+                toast.success("Person added successfully!");
+            } else {
+                // Update existing person
+                personData.id = person.id;
+                const response = await axios.put(`${BASE_URL}/${person.id}`, personData);
+
+                // Use the response data if available, otherwise create updated object
+                const updatedPerson = response.data || {
+                    ...personData,
+                    id: person.id,
+                    // Recalculate age on frontend as fallback
+                    age: calculateAge(person.dateOfBirth)
+                };
+
+                setPeople((previousPeople) =>
+                    previousPeople.map(p => p.id === person.id ? updatedPerson : p)
+                );
+                toast.success("Person updated successfully!");
             }
             methods.reset(defaultFormValues);
-            toast.success("Saved successfully!");
+            setEditData(null);
         } catch (error) {
             console.log(error);
-            toast.error("Error has occured!");
-        }
-        finally {
+            toast.error(error.response?.data?.message || "Error has occured!");
+        } finally {
             setLoading(false);
         }
     }
 
     const handlePersonEdit = (person) => {
-        setEditData(person);
+        // Format date for input field (YYYY-MM-DD)
+        const formattedPerson = {
+            ...person,
+            dateOfBirth: person.dateOfBirth ? person.dateOfBirth.split('T')[0] : '',
+            salary: person.salary || ''
+        };
+        setEditData(formattedPerson);
     }
 
     const handlePersonDelete = async (person) => {
@@ -85,12 +134,11 @@ function Person() {
             toast.success("Deleted successfully!");
         } catch (error) {
             toast.error("Error on deleting!");
-        }
-        finally {
+        } finally {
             setLoading(false);
         }
-
     }
+
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -101,8 +149,18 @@ function Person() {
                     {loading && <p>Loading...</p>}
                 </div>
 
-                <PersonForm methods={methods} onFormSubmit={handleFormSubmit} onFormReset={handleFormReset} />
-                <PersonList peopleList={people} onPersonEdit={handlePersonEdit} onPersonDelete={handlePersonDelete} />
+                <PersonForm
+                    methods={methods}
+                    onFormSubmit={handleFormSubmit}
+                    onFormReset={handleFormReset}
+                    calculateAge={calculateAge}
+                    dateOfBirth={dateOfBirth}
+                />
+                <PersonList
+                    peopleList={people}
+                    onPersonEdit={handlePersonEdit}
+                    onPersonDelete={handlePersonDelete}
+                />
             </div>
         </div>
     )

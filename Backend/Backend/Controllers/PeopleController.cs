@@ -16,21 +16,28 @@ namespace Backend.Controllers
             _context = context;
         }
         [HttpPost] //POST  /api/people
-        public async Task<IActionResult> AddPerson(Person person)
+        public async Task<IActionResult> AddPerson(PersonDto personDto)
         {
             try
             {
+                var person = new Person
+                {
+                    FirstName = personDto.FirstName,
+                    LastName = personDto.LastName,
+                    EmailAddress = personDto.EmailAddress,
+                    DateOfBirth = personDto.DateOfBirth,
+                    Salary = personDto.Salary ?? 0,
+                    Department = personDto.Department
+                };
+
                 _context.People.Add(person);
                 await _context.SaveChangesAsync();
-                return CreatedAtRoute("GetPerson",new{id=person.Id},person); //201 created status code + location of the resource(http://localhost:3000/api/people/{id})+ person object in the body 
+                return CreatedAtRoute("GetPerson", new { id = person.Id }, person);
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.
-                Message);
-                //500 internal server error 
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
-
         }
         [HttpGet] //GET   /api/people
         public async Task<IActionResult> GetPeople()
@@ -70,38 +77,46 @@ namespace Backend.Controllers
 
         }
 
-         [HttpPut("{id:int}")] //PUT  /api/people/1
-        public async Task<IActionResult> UpdatePerson(int id,[FromBody]Person person)
+        [HttpPut("{id:int}")] //PUT  /api/people/1
+        public async Task<IActionResult> UpdatePerson(int id, [FromBody] Person person)
         {
             try
             {
-                if(id != person.Id)
+                if (id != person.Id)
                 {
-                    return BadRequest("Id in url and body mismatches"); //400 + message in body
+                    return BadRequest("Id in url and body mismatches");
                 }
-                if(!await _context.People.AnyAsync(p=> p.Id == id))
+
+                var existingPerson = await _context.People.FindAsync(id);
+                if (existingPerson is null)
                 {
-                    return NotFound(); //404
+                    return NotFound();
                 }
-                _context.People.Update(person);
+
+                // Update all fields
+                existingPerson.FirstName = person.FirstName;
+                existingPerson.LastName = person.LastName;
+                existingPerson.EmailAddress = person.EmailAddress;
+                existingPerson.DateOfBirth = person.DateOfBirth;
+                existingPerson.Salary = person.Salary;
+                existingPerson.Department = person.Department;
+
                 await _context.SaveChangesAsync();
-                 return NoContent(); //204 status code 
+
+                // Return the updated person with calculated age
+                return Ok(existingPerson); // Return 200 with the updated person
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.
-                Message);
-                //500 internal server error 
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
-
         }
-
-           [HttpDelete("{id:int}")] //Delete  /api/people/1
+        [HttpDelete("{id:int}")] //Delete  /api/people/1
         public async Task<IActionResult> DeletePerson(int id)
         {
             try
             {
-              
+
                 var person = await _context.People.FindAsync(id);
                 if (person is null)
                 {
@@ -109,7 +124,7 @@ namespace Backend.Controllers
                 }
                 _context.People.Remove(person);
                 await _context.SaveChangesAsync();
-                 return NoContent(); //204 status code 
+                return NoContent(); //204 status code 
             }
             catch (Exception ex)
             {

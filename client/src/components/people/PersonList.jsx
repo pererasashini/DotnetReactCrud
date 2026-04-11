@@ -8,6 +8,22 @@ const PersonList = ({ peopleList, onPersonEdit, onPersonDelete }) => {
         </div>)
     }
 
+    // Format salary as currency
+    const formatSalary = (salary) => {
+        if (!salary && salary !== 0) return '-';
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2
+        }).format(salary);
+    };
+
+    // Format date
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString();
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
@@ -20,43 +36,78 @@ const PersonList = ({ peopleList, onPersonEdit, onPersonDelete }) => {
                             <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                                 Last Name
                             </th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                Email
+                            </th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                DOB
+                            </th>
+                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                                Age
+                            </th>
+                            <th className="px-6 py-4 text-right text-sm font-semibold text-gray-700">
+                                Salary
+                            </th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                Department
+                            </th>
                             <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
                                 Actions
                             </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {peopleList.map(person => <tr key={person.id}
-                            className="hover:bg-gray-50 transition-colors duration-150"
-                        >
-                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                {person.firstName}
-                            </td>
-                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                {person.lastName}
-                            </td>
-
-                            <td className="px-6 py-4 text-center">
-                                <div className="flex items-center justify-center space-x-2">
-                                    <button onClick={() => onPersonEdit(person)}
-                                        className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 transform hover:scale-105"
-                                        title="Edit person"
-                                    >
-                                        <Edit className="w-4 h-4 mr-1" />
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => onPersonDelete(person)}
-                                        className="inline-flex items-center px-3 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-all duration-200 transform hover:scale-105"
-                                        title="Delete person"
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-1" />
-                                        Delete
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>)}
-
+                        {peopleList.map(person => (
+                            <tr key={person.id}
+                                className="hover:bg-gray-50 transition-colors duration-150"
+                            >
+                                <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                    {person.firstName}
+                                </td>
+                                <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                    {person.lastName}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-600">
+                                    {person.emailAddress || '-'}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-600">
+                                    {formatDate(person.dateOfBirth)}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-center text-gray-600">
+                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                        {person.age || '-'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-right font-medium text-gray-900">
+                                    {formatSalary(person.salary)}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-600">
+                                    <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                                        {person.department || '-'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <button 
+                                            onClick={() => onPersonEdit(person)}
+                                            className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 transform hover:scale-105"
+                                            title="Edit person"
+                                        >
+                                            <Edit className="w-4 h-4 mr-1" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => onPersonDelete(person)}
+                                            className="inline-flex items-center px-3 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-all duration-200 transform hover:scale-105"
+                                            title="Delete person"
+                                        >
+                                            <Trash2 className="w-4 h-4 mr-1" />
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -64,4 +115,4 @@ const PersonList = ({ peopleList, onPersonEdit, onPersonDelete }) => {
     );
 };
 
-export default PersonList
+export default PersonList;
